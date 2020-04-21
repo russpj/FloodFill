@@ -20,9 +20,13 @@ smallRoom = [
 	[floorSquare, floorSquare, floorSquare, floorSquare, floorSquare]
 	]
 buckets = [
-	{'color': [1, 0, 0, 1],
-	'pos': [0,0]
-	}
+	{
+		'color': [1, 0, 0, 1],
+		'pos': [0,0]
+	},
+	{
+		'color': [0, 0, 1, 1],
+		'pos': [0,4]}
 	]
 
 # BoardLayout encapsulates the playing board
