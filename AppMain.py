@@ -13,9 +13,16 @@ from FloodFillSolver import FloodFillSolver
 floorSquare = [1,1,1,1]
 wallSquare = [0,0,0,1]
 smallRoom = [
-	[floorSquare, wallSquare, floorSquare],
-	[floorSquare, wallSquare, floorSquare],
-	[floorSquare, floorSquare, floorSquare]
+	[floorSquare, wallSquare, floorSquare, floorSquare, floorSquare],
+	[floorSquare, wallSquare, floorSquare, floorSquare, floorSquare],
+	[floorSquare, wallSquare, floorSquare, floorSquare, floorSquare],
+	[floorSquare, wallSquare, wallSquare, wallSquare, floorSquare],
+	[floorSquare, floorSquare, floorSquare, floorSquare, floorSquare]
+	]
+buckets = [
+	{'color': [1, 0, 0, 1],
+	'pos': [0,0]
+	}
 	]
 
 # BoardLayout encapsulates the playing board
@@ -62,9 +69,6 @@ class BoardLayout(BoxLayout):
 					size = [posNext[0]-posThis[0], posNext[1]-posThis[1]]
 					Color(squareColor[0], squareColor[1], squareColor[2], squareColor[3])
 					Rectangle(size = size, pos=posThis)
-					
-					
-
 
 
 class HeaderLayout(BoxLayout):
@@ -147,6 +151,8 @@ class FloodFill(App):
 		layout.add_widget(self.footer)
 
 		self.solver = FloodFillSolver(smallRoom, 5)
+		for bucket in buckets:
+			self.solver.AddBucket(bucket)
 		self.boardLayout.InitRoom(self.solver.room)
 
 		self.generator = self.solver.Generate()
