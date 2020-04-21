@@ -8,7 +8,7 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.clock import Clock
-from FloodFill import FloodFill
+from FloodFillSolver import FloodFillSolver
 
 
 # BoardLayout encapsulates the playing board
@@ -107,11 +107,11 @@ class FloodFill(App):
 		self.footer = FooterLayout(size_hint=(1, .2))
 		layout.add_widget(self.footer)
 
-		self.solver = FloodFill()
+		self.solver = FloodFillSolver(5)
 		# board = self.solver.board
 		# self.boardLayout.InitBoard(board)
 
-		# self.generator = self.solver.Generate()
+		self.generator = self.solver.Generate()
 		Clock.schedule_interval(self.FrameN, 0.0)
 
 		return layout
@@ -125,7 +125,7 @@ class FloodFill(App):
 			return
 
 		try:
-			# result = next(self.generator)
+			result = next(self.generator)
 			self.UpdateText(fps=fpsValue)
 		except StopIteration:
 			# kill the timer
