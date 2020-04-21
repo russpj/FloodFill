@@ -10,8 +10,13 @@ from kivy.uix.button import Button
 from kivy.clock import Clock
 from FloodFillSolver import FloodFillSolver
 
-
-smallRoom = [[[1,1,1,1]]]
+floorSquare = [1,1,1,1]
+wallSquare = [0,0,0,1]
+smallRoom = [
+	[floorSquare, wallSquare, floorSquare],
+	[floorSquare, wallSquare, floorSquare],
+	[floorSquare, floorSquare, floorSquare]
+	]
 
 # BoardLayout encapsulates the playing board
 class BoardLayout(BoxLayout):
@@ -30,6 +35,15 @@ class BoardLayout(BoxLayout):
 	def update_rect(self, instance, value):
 		rectSize = self.size
 		rectPos = self.pos
+		squareSize = []
+		squarePos = []
+
+		if rectSize[0] > rectSize[1]:
+			# wider than tall
+			squareSize = [rectSize[1], rectSize[1]]
+		else:
+			# taller than wide
+			squareSize = [rectSize[0], rectSize[0]]
 
 		with self.canvas:
 			self.canvas.clear()
@@ -41,8 +55,8 @@ class BoardLayout(BoxLayout):
 				numCols = len(self.room[row])
 				for col in range(numCols):
 					squareColor = self.room[row][col]
-					posThis = [rectPos[0]+rectSize[0]*col/numCols, rectPos[1]+rectSize[1]*row/numRows]
-					posNext = [rectPos[0]+rectSize[0]*(col+1)/numCols, rectPos[1]+rectSize[1]*(row+1)/numRows]
+					posThis = [rectPos[0]+squareSize[0]*col/numCols, rectPos[1]+squareSize[1]*row/numRows]
+					posNext = [rectPos[0]+squareSize[0]*(col+1)/numCols, rectPos[1]+squareSize[1]*(row+1)/numRows]
 					size = [posNext[0]-posThis[0], posNext[1]-posThis[1]]
 					Color(squareColor[0], squareColor[1], squareColor[2], squareColor[3])
 					Rectangle(size = size, pos=posThis)
