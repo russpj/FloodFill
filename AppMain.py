@@ -41,9 +41,11 @@ class BoardLayout(BoxLayout):
 		if rectSize[0] > rectSize[1]:
 			# wider than tall
 			squareSize = [rectSize[1], rectSize[1]]
+			squarePos = [rectPos[0]+(rectSize[0]-squareSize[0])/2, rectPos[1]]
 		else:
 			# taller than wide
 			squareSize = [rectSize[0], rectSize[0]]
+			squarePos = [rectPos[0], rectPos[1]+(rectSize[1]-squareSize[1])/2]
 
 		with self.canvas:
 			self.canvas.clear()
@@ -55,8 +57,8 @@ class BoardLayout(BoxLayout):
 				numCols = len(self.room[row])
 				for col in range(numCols):
 					squareColor = self.room[row][col]
-					posThis = [rectPos[0]+squareSize[0]*col/numCols, rectPos[1]+squareSize[1]*row/numRows]
-					posNext = [rectPos[0]+squareSize[0]*(col+1)/numCols, rectPos[1]+squareSize[1]*(row+1)/numRows]
+					posThis = [squarePos[0]+squareSize[0]*col/numCols, squarePos[1]+squareSize[1]*row/numRows]
+					posNext = [squarePos[0]+squareSize[0]*(col+1)/numCols, squarePos[1]+squareSize[1]*(row+1)/numRows]
 					size = [posNext[0]-posThis[0], posNext[1]-posThis[1]]
 					Color(squareColor[0], squareColor[1], squareColor[2], squareColor[3])
 					Rectangle(size = size, pos=posThis)
