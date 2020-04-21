@@ -40,6 +40,9 @@ class BoardLayout(BoxLayout):
 		self.room = room
 
 	def update_rect(self, instance, value):
+		self.UpdateRoom()
+
+	def UpdateRoom(self):
 		rectSize = self.size
 		rectPos = self.pos
 		squareSize = []
@@ -150,13 +153,13 @@ class FloodFill(App):
 		self.footer = FooterLayout(size_hint=(1, .2))
 		layout.add_widget(self.footer)
 
-		self.solver = FloodFillSolver(smallRoom, 5)
+		self.solver = FloodFillSolver(smallRoom)
 		for bucket in buckets:
 			self.solver.AddBucket(bucket)
 		self.boardLayout.InitRoom(self.solver.room)
 
 		self.generator = self.solver.Generate()
-		Clock.schedule_interval(self.FrameN, 0.0)
+		Clock.schedule_interval(self.FrameN, 1.0)
 
 		return layout
 
@@ -179,6 +182,7 @@ class FloodFill(App):
 
 	def UpdateText(self, fps, updatePositions = True):
 		self.header.UpdateText(fps = fps)
+		self.boardLayout.UpdateRoom()
 
 def Main():
 	FloodFill().run()
