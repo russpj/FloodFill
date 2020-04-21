@@ -8,6 +8,7 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.clock import Clock
+from FloodFill import FloodFill
 
 
 # BoardLayout encapsulates the playing board
@@ -106,7 +107,7 @@ class FloodFill(App):
 		self.footer = FooterLayout(size_hint=(1, .2))
 		layout.add_widget(self.footer)
 
-		# self.solver = SudokuSolver(easyBoard, yieldLevel=0)
+		self.solver = FloodFill()
 		# board = self.solver.board
 		# self.boardLayout.InitBoard(board)
 
