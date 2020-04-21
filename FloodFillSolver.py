@@ -7,7 +7,8 @@ from collections import deque
 
 
 class FloodFillSolver:
-	def __init__(self, limit):
+	def __init__(self, room, limit=0):
+		self.room = room
 		self.limit = limit
 
 	def Generate(self):

@@ -11,21 +11,44 @@ from kivy.clock import Clock
 from FloodFillSolver import FloodFillSolver
 
 
+smallRoom = [[[1,1,1,1]]]
+
 # BoardLayout encapsulates the playing board
 class BoardLayout(BoxLayout):
 	def __init__(self):
 		super().__init__()
+		self.room = []
 		self.PlaceStuff()
 		self.bind(pos=self.update_rect, size=self.update_rect)
 
 	def PlaceStuff(self):
-		with self.canvas.before:
-			Color(0.1, .3, 0.1, 1)  # green; colors range from 0-1 not 0-255
-			self.rect = Rectangle(size=self.size, pos=self.pos)
+		pass
+
+	def InitRoom(self, room):
+		self.room = room
 
 	def update_rect(self, instance, value):
-		instance.rect.pos = instance.pos
-		instance.rect.size = instance.size
+		rectSize = self.size
+		rectPos = self.pos
+
+		with self.canvas:
+			self.canvas.clear()
+			Color(0.5, 0.5, 0.5, 1)
+			Rectangle(size=rectSize, pos=rectPos)
+
+			numRows = len(self.room)
+			for row in range(numRows):
+				numCols = len(self.room[row])
+				for col in range(numCols):
+					squareColor = self.room[row][col]
+					posThis = [rectPos[0]+rectSize[0]*col/numCols, rectPos[1]+rectSize[1]*row/numRows]
+					posNext = [rectPos[0]+rectSize[0]*(col+1)/numCols, rectPos[1]+rectSize[1]*(row+1)/numRows]
+					size = [posNext[0]-posThis[0], posNext[1]-posThis[1]]
+					Color(squareColor[0], squareColor[1], squareColor[2], squareColor[3])
+					Rectangle(size = size, pos=posThis)
+					
+					
+
 
 
 class HeaderLayout(BoxLayout):
@@ -107,9 +130,8 @@ class FloodFill(App):
 		self.footer = FooterLayout(size_hint=(1, .2))
 		layout.add_widget(self.footer)
 
-		self.solver = FloodFillSolver(5)
-		# board = self.solver.board
-		# self.boardLayout.InitBoard(board)
+		self.solver = FloodFillSolver(smallRoom, 5)
+		self.boardLayout.InitRoom(self.solver.room)
 
 		self.generator = self.solver.Generate()
 		Clock.schedule_interval(self.FrameN, 0.0)
