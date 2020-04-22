@@ -11,7 +11,7 @@ class FloodFillSolver:
 		self.room = room
 		self.tiles = deque()
 
-	def AddBucket(self, bucket):
+	def AddBucket(self, bucket, add_to_queue=True):
 		row = bucket['pos'][0]
 		col = bucket['pos'][1]
 		if row < 0 or row >= len(self.room):
@@ -22,7 +22,8 @@ class FloodFillSolver:
 		if curColor != [1, 1, 1, 1]:
 			return False
 		self.room[row][col] = bucket['color']
-		self.tiles.append(bucket['pos'])
+		if add_to_queue:
+			self.tiles.append(bucket['pos'])
 		return True
 
 	def Generate(self):

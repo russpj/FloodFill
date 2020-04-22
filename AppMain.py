@@ -261,7 +261,7 @@ class FloodFill(App):
 		tile = [row, col]
 		bucket = {'color': wallSquare, 'pos': tile}
 		print('Adding bucket {bucket}'.format(bucket=bucket))
-		self.solver.AddBucket(bucket)
+		self.solver.AddBucket(bucket, add_to_queue = False)
 		self.boardLayout.UpdateRoom()
 
 
