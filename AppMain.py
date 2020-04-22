@@ -29,6 +29,15 @@ buckets = [
 		'pos': [0,4]}
 	]
 
+def BigEmptyRoom(numRows, numColumns):
+	room = []
+	for rowNum in range(numRows):
+		row = []
+		for colNum in range(numColumns):
+			row.append(floorSquare)
+		room.append(row)
+	return room
+
 
 class AppState(Enum):
 	Ready = 1
@@ -239,7 +248,7 @@ class FloodFill(App):
 		self.footer.UpdateButtons(self.state)
 
 	def InitRoom(self):
-		self.solver = FloodFillSolver(copy.deepcopy(smallRoom))
+		self.solver = FloodFillSolver(BigEmptyRoom(10,10))
 		for bucket in buckets:
 			self.solver.AddBucket(bucket)
 		self.boardLayout.InitRoom(self.solver.room)
