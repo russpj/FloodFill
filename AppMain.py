@@ -39,11 +39,12 @@ class AppState(Enum):
 
 # BoardLayout encapsulates the playing board
 class BoardLayout(BoxLayout):
-	def __init__(self):
+	def __init__(self, touch_notification=None):
 		super().__init__()
 		self.room = []
 		self.PlaceStuff()
 		self.bind(pos=self.update_rect, size=self.update_rect)
+		self.touch_notification = touch_notification
 
 	def PlaceStuff(self):
 		pass
@@ -90,11 +91,19 @@ class BoardLayout(BoxLayout):
 					Color(squareColor[0], squareColor[1], squareColor[2], squareColor[3])
 					Rectangle(size = size, pos=posThis)
 
-	def on_touch_down(self, touch):
-		pos = [touch.pos[0]-self.squarePos[0], touch.pos[1]-self.squarePos[1]]
-		print('Touch down at {touch} in pos={pos}, size={size}'.
-				format(touch=touch, pos=pos, size=self.squareSize))
+	# Calculates the location in the square, as fractions
+	def PosFromTouch(self, touch):
+		pos = [(touch.pos[0]-self.squarePos[0])/self.squareSize[0], 
+				 (touch.pos[1]-self.squarePos[1])/self.squareSize[1]]
+		return pos
 
+	def on_touch_down(self, touch):
+		if self.touch_notification is None:
+			return
+		pos = self.PosFromTouch(touch)
+		print('Touch down at {touch} in pos={pos}'.
+				format(touch=touch, pos=pos))
+		self.touch_notification(pos)
 
 	def on_touch_up(self, touch):
 		print('Touch up at {touch}'.format(touch=touch))
@@ -184,7 +193,7 @@ class FloodFill(App):
 		layout.add_widget(self.header)
 
 		# board
-		self.boardLayout = boardLayout = BoardLayout()
+		self.boardLayout = boardLayout = BoardLayout(self.TouchNotificationCallback)
 		layout.add_widget(boardLayout)
 
 		# footer
@@ -241,6 +250,19 @@ class FloodFill(App):
 
 	def ResetButtonCallback(self, instance):
 		self.InitRoom()
+
+	def TouchNotificationCallback(self, pos):
+		# pos is in fractions
+		row = int(pos[1]*len(self.solver.room))
+		if (len(self.solver.room) >0):
+			col = int(pos[0]*len(self.solver.room[0]))
+		else:
+			col = -1
+		tile = [row, col]
+		bucket = {'color': wallSquare, 'pos': tile}
+		print('Adding bucket {bucket}'.format(bucket=bucket))
+		self.solver.AddBucket(bucket)
+		self.boardLayout.UpdateRoom()
 
 
 def Main():
