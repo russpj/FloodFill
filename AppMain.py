@@ -111,6 +111,10 @@ class FooterLayout(BoxLayout):
 			Color(0.4, .1, 0.4, 1)  # purple; colors range from 0-1 not 0-255
 			self.rect = Rectangle(size=self.size, pos=self.pos)
 		
+		self.resetButton = Button(text='Reset', )
+		self.resetButton.disabled = True
+		self.add_widget(self.resetButton)
+
 		self.startButton = Button(text='')
 		self.add_widget(self.startButton)
 		self.UpdateStartButtonText()
@@ -182,7 +186,6 @@ class FloodFill(App):
 			# kill the timer
 			self.UpdateText(fps=fpsValue, updatePositions = self.footer.IsPaused)
 			self.footer.SetButtonsState(start_button_text = 'Start')
-			
 
 	def UpdateText(self, fps, updatePositions = True):
 		self.header.UpdateText(fps = fps)
