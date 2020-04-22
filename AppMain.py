@@ -87,6 +87,16 @@ class BoardLayout(BoxLayout):
 					Color(squareColor[0], squareColor[1], squareColor[2], squareColor[3])
 					Rectangle(size = size, pos=posThis)
 
+	def on_touch_down(self, touch):
+		print('Touch down at {touch} in pos={pos}, size={size}'.
+				format(touch=touch, pos=self.pos, size=self.size))
+
+	def on_touch_up(self, touch):
+		print('Touch up at {touch}'.format(touch=touch))
+
+	def on_touch_move(self, touch):
+		print('Touch move at {touch}'.format(touch=touch))
+
 
 class HeaderLayout(BoxLayout):
 	def __init__(self, **kwargs):
@@ -157,20 +167,7 @@ class FooterLayout(BoxLayout):
 			self.resetButton.disabled = True
 			return
 
-	def on_touch_down(self, touch):
-		print('Touch down at {touch}'.format(touch=touch))
-		return super(BoxLayout, self).on_touch_down(touch)
-
-	def on_touch_up(self, touch):
-		print('Touch up at {touch}'.format(touch=touch))
-		return super(BoxLayout, self).on_touch_up(touch)
-
-	def on_touch_move(self, touch):
-		print('Touch move at {touch}'.format(touch=touch))
-		return super(BoxLayout, self).on_touch_move(touch)
-
-
-
+		
 class FloodFill(App):
 	def build(self):
 		self.state = AppState.Ready
