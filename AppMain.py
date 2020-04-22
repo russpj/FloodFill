@@ -57,22 +57,25 @@ class BoardLayout(BoxLayout):
 	def UpdateRoom(self):
 		rectSize = self.size
 		rectPos = self.pos
-		squareSize = []
-		squarePos = []
+		self.squareSize = []
+		self.squarePos = []
 
 		if rectSize[0] > rectSize[1]:
 			# wider than tall
-			squareSize = [rectSize[1], rectSize[1]]
-			squarePos = [rectPos[0]+(rectSize[0]-squareSize[0])/2, rectPos[1]]
+			self.squareSize = [rectSize[1], rectSize[1]]
+			self.squarePos = [rectPos[0]+(rectSize[0]-self.squareSize[0])/2, rectPos[1]]
 		else:
 			# taller than wide
-			squareSize = [rectSize[0], rectSize[0]]
-			squarePos = [rectPos[0], rectPos[1]+(rectSize[1]-squareSize[1])/2]
+			self.squareSize = [rectSize[0], rectSize[0]]
+			self.squarePos = [rectPos[0], rectPos[1]+(rectSize[1]-self.squareSize[1])/2]
 
 		with self.canvas:
 			self.canvas.clear()
 			Color(0.5, 0.5, 0.5, 1)
 			Rectangle(size=rectSize, pos=rectPos)
+
+			squareSize = self.squareSize
+			squarePos = self.squarePos
 
 			numRows = len(self.room)
 			for row in range(numRows):
@@ -88,8 +91,10 @@ class BoardLayout(BoxLayout):
 					Rectangle(size = size, pos=posThis)
 
 	def on_touch_down(self, touch):
+		pos = [touch.pos[0]-self.squarePos[0], touch.pos[1]-self.squarePos[1]]
 		print('Touch down at {touch} in pos={pos}, size={size}'.
-				format(touch=touch, pos=self.pos, size=self.size))
+				format(touch=touch, pos=pos, size=self.squareSize))
+
 
 	def on_touch_up(self, touch):
 		print('Touch up at {touch}'.format(touch=touch))
