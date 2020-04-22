@@ -1,7 +1,6 @@
-from os import name
+from enum import Enum
+import copy
 from kivy.app import App
-from kivy.uix.anchorlayout import AnchorLayout
-from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.graphics import Color, Rectangle, Line
 from kivy.uix.textinput import TextInput
@@ -19,6 +18,7 @@ smallRoom = [
 	[floorSquare, wallSquare, wallSquare, wallSquare, floorSquare],
 	[floorSquare, floorSquare, floorSquare, floorSquare, floorSquare]
 	]
+
 buckets = [
 	{
 		'color': [1, 0, 0, 1],
@@ -28,6 +28,14 @@ buckets = [
 		'color': [0, 0, 1, 1],
 		'pos': [0,4]}
 	]
+
+
+class AppState(Enum):
+	Ready = 1
+	Running = 2
+	Paused = 3
+	Finished = 4
+
 
 # BoardLayout encapsulates the playing board
 class BoardLayout(BoxLayout):
@@ -71,8 +79,10 @@ class BoardLayout(BoxLayout):
 				numCols = len(self.room[row])
 				for col in range(numCols):
 					squareColor = self.room[row][col]
-					posThis = [squarePos[0]+squareSize[0]*col/numCols, squarePos[1]+squareSize[1]*row/numRows]
-					posNext = [squarePos[0]+squareSize[0]*(col+1)/numCols, squarePos[1]+squareSize[1]*(row+1)/numRows]
+					posThis = [squarePos[0]+squareSize[0]*col/numCols, 
+								squarePos[1]+squareSize[1]*row/numRows]
+					posNext = [squarePos[0]+squareSize[0]*(col+1)/numCols, 
+								squarePos[1]+squareSize[1]*(row+1)/numRows]
 					size = [posNext[0]-posThis[0], posNext[1]-posThis[1]]
 					Color(squareColor[0], squareColor[1], squareColor[2], squareColor[3])
 					Rectangle(size = size, pos=posThis)
@@ -100,53 +110,58 @@ class HeaderLayout(BoxLayout):
 
 
 class FooterLayout(BoxLayout):
-	def __init__(self, **kwargs):
+	def __init__(self, start_button_callback=None, 
+							reset_button_callback=None, 
+							**kwargs):
 		super().__init__(orientation='horizontal', padding=10, **kwargs)
-		self.running = False
-		self.PlaceStuff()
+		self.PlaceStuff(start_button_callback, reset_button_callback)
 		self.bind(pos=self.update_rect, size=self.update_rect)
 
-	def PlaceStuff(self):
+	def PlaceStuff(self, startButtonCallback, resetButtonCallback):
 		with self.canvas.before:
 			Color(0.4, .1, 0.4, 1)  # purple; colors range from 0-1 not 0-255
 			self.rect = Rectangle(size=self.size, pos=self.pos)
 		
 		self.resetButton = Button(text='Reset', )
 		self.resetButton.disabled = True
+		if resetButtonCallback is not None:
+			self.resetButton.bind(on_press=resetButtonCallback)
 		self.add_widget(self.resetButton)
 
-		self.startButton = Button(text='')
+		self.startButton = Button(text='Start')
 		self.add_widget(self.startButton)
-		self.UpdateStartButtonText()
-		self.startButton.bind(on_press=self.HandleStartButton)
+		if startButtonCallback is not None:
+			self.startButton.bind(on_press=startButtonCallback)
 
 	def update_rect(self, instance, value):
 		instance.rect.pos = instance.pos
 		instance.rect.size = instance.size
 
-	def HandleStartButton(self, instance):
-		self.running = not self.running
-		self.UpdateStartButtonText()
-
-	def UpdateStartButtonText(self):
-		if self.running:
-			self.startButton.text = 'Pause'
-		else:
+	def UpdateButtons(self, state):
+		if state==AppState.Finished:
 			self.startButton.text = 'Start'
-
-	def IsPaused(self):
-		return not self.running
-
-	def SetButtonsState(self, start_button_text):
-		if start_button_text == 'Pause':
-			self.running = True;
-		if start_button_text == 'Start':
-			self.running = False
-		self.UpdateStartButtonText()
+			self.startButton.disabled = True
+			self.resetButton.text = 'Reset'
+			self.resetButton.disabled = False
+			return
+		if state == AppState.Paused or state == AppState.Ready:
+			self.startButton.text = 'Start'
+			self.startButton.disabled = False
+			self.resetButton.text = 'Reset'
+			self.resetButton.disabled = True
+			return
+		if state == AppState.Running:
+			self.startButton.text = 'Pause'
+			self.startButton.disabled = False
+			self.resetButton.text = 'Reset'
+			self.resetButton.disabled = True
+			return
 
 
 class FloodFill(App):
 	def build(self):
+		self.state = AppState.Ready
+
 		self.root = layout = BoxLayout(orientation = 'vertical')
 
 		# header
@@ -158,16 +173,14 @@ class FloodFill(App):
 		layout.add_widget(boardLayout)
 
 		# footer
-		self.footer = FooterLayout(size_hint=(1, .2))
+		self.footer = FooterLayout(size_hint=(1, .2), 
+														 start_button_callback = self.StartButtonCallback,
+														 reset_button_callback = self.ResetButtonCallback)
 		layout.add_widget(self.footer)
 
-		self.solver = FloodFillSolver(smallRoom)
-		for bucket in buckets:
-			self.solver.AddBucket(bucket)
-		self.boardLayout.InitRoom(self.solver.room)
+		self.InitRoom()
 
-		self.generator = self.solver.Generate()
-		Clock.schedule_interval(self.FrameN, 1.0)
+		Clock.schedule_interval(self.FrameN, 0.3)
 
 		return layout
 
@@ -176,7 +189,7 @@ class FloodFill(App):
 			fpsValue = 1/dt
 		else:
 			fpsValue = 0
-		if self.footer.IsPaused():
+		if self.state != AppState.Running:
 			return
 
 		try:
@@ -184,12 +197,36 @@ class FloodFill(App):
 			self.UpdateText(fps=fpsValue)
 		except StopIteration:
 			# kill the timer
-			self.UpdateText(fps=fpsValue, updatePositions = self.footer.IsPaused)
-			self.footer.SetButtonsState(start_button_text = 'Start')
+			self.UpdateText(fps=fpsValue)
+			self.state = AppState.Finished
+			self.footer.UpdateButtons(self.state)
 
-	def UpdateText(self, fps, updatePositions = True):
+	def UpdateText(self, fps):
 		self.header.UpdateText(fps = fps)
 		self.boardLayout.UpdateRoom()
+		self.footer.UpdateButtons(self.state)
+
+	def StartButtonCallback(self, instance):
+		if self.state == AppState.Ready or self.state == AppState.Paused:
+			self.state = AppState.Running
+		else:
+			if self.state == AppState.Running:
+				self.state = AppState.Paused
+		self.footer.UpdateButtons(self.state)
+
+	def InitRoom(self):
+		self.solver = FloodFillSolver(copy.deepcopy(smallRoom))
+		for bucket in buckets:
+			self.solver.AddBucket(bucket)
+		self.boardLayout.InitRoom(self.solver.room)
+		self.state = AppState.Ready
+		self.boardLayout.UpdateRoom()
+		self.footer.UpdateButtons(self.state)
+		self.generator = self.solver.Generate()
+
+	def ResetButtonCallback(self, instance):
+		self.InitRoom()
+
 
 def Main():
 	FloodFill().run()
