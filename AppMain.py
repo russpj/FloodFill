@@ -129,11 +129,20 @@ class HeaderLayout(BoxLayout):
 		with self.canvas.before:
 			Color(0.6, .6, 0.1, 1)  # yellow; colors range from 0-1 not 0-255
 			self.rect = Rectangle(size=self.size, pos=self.pos)
+		self.statusLabel = Label(text='Status:', color=[0.7, 0.05, 0.7, 1])
+		self.add_widget(self.statusLabel)
 		self.fpsLabel = Label(text='0 fps', color=[0.7, 0.05, 0.7, 1])
 		self.add_widget(self.fpsLabel)
 		
-	def UpdateText(self, fps):
+	def UpdateText(self, fps=0, state=AppState.Ready):
+		statusFromState = {
+			AppState.Ready: 'Drawing Walls',
+			AppState.Finished: 'Done',
+			AppState.Paused: 'Paused',
+			AppState.Running: 'Running Simulation'}
+
 		self.fpsLabel.text = '{fpsValue:.0f} fps'.format(fpsValue=fps)
+		self.statusLabel.text = statusFromState[state]
 
 	def update_rect(self, instance, value):
 		instance.rect.pos = instance.pos
@@ -211,7 +220,7 @@ class FloodFill(App):
 
 		self.InitRoom()
 
-		Clock.schedule_interval(self.FrameN, 0.05)
+		Clock.schedule_interval(self.FrameN, 0.01)
 
 		return layout
 
@@ -225,17 +234,20 @@ class FloodFill(App):
 
 		try:
 			result = next(self.generator)
-			self.UpdateText(fps=fpsValue)
+			self.UpdateText(fps=fpsValue, state=self.state)
 		except StopIteration:
 			# kill the timer
-			self.UpdateText(fps=fpsValue)
+			self.UpdateText(fps=fpsValue, state=self.state)
 			self.state = AppState.Finished
-			self.footer.UpdateButtons(self.state)
+			self.UpdateUX(fps=fpsValue, state=self.state)
 
-	def UpdateText(self, fps):
-		self.header.UpdateText(fps = fps)
-		self.boardLayout.UpdateRoom()
+	def UpdateUX(self, fps=0, state=AppState.Ready):
 		self.footer.UpdateButtons(self.state)
+		self.header.UpdateText(fps=fps, state=state)
+
+	def UpdateText(self, fps, state):
+		self.boardLayout.UpdateRoom()
+		self.UpdateUX(fps=fps, state=self.state)
 
 	def StartButtonCallback(self, instance):
 		if self.state == AppState.Ready or self.state == AppState.Paused:
@@ -243,17 +255,17 @@ class FloodFill(App):
 		else:
 			if self.state == AppState.Running:
 				self.state = AppState.Paused
-		self.footer.UpdateButtons(self.state)
+		self.UpdateUX(state=self.state)
 
 	def InitRoom(self):
-		self.solver = FloodFillSolver(BigEmptyRoom(20,20))
+		self.solver = FloodFillSolver(BigEmptyRoom(30,30))
 		for bucket in buckets:
 			self.solver.AddBucket(bucket)
 		self.boardLayout.InitRoom(self.solver.room)
 		self.state = AppState.Ready
 		self.paintingColor = floorSquare
 		self.boardLayout.UpdateRoom()
-		self.footer.UpdateButtons(self.state)
+		self.UpdateUX(state=self.state)
 		self.generator = self.solver.Generate()
 
 	def ResetButtonCallback(self, instance):
