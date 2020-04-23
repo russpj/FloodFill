@@ -110,15 +110,13 @@ class BoardLayout(BoxLayout):
 		if self.touch_notification is None:
 			return
 		pos = self.PosFromTouch(touch)
-		print('Touch down at {touch} in pos={pos}'.
-				format(touch=touch, pos=pos))
-		self.touch_notification(pos)
-
-	def on_touch_up(self, touch):
-		print('Touch up at {touch}'.format(touch=touch))
+		self.touch_notification(pos, first_touch = True)
 
 	def on_touch_move(self, touch):
-		print('Touch move at {touch}'.format(touch=touch))
+		if self.touch_notification is None:
+			return
+		pos = self.PosFromTouch(touch)
+		self.touch_notification(pos)
 
 
 class HeaderLayout(BoxLayout):
@@ -213,7 +211,7 @@ class FloodFill(App):
 
 		self.InitRoom()
 
-		Clock.schedule_interval(self.FrameN, 0.3)
+		Clock.schedule_interval(self.FrameN, 0.05)
 
 		return layout
 
@@ -248,11 +246,12 @@ class FloodFill(App):
 		self.footer.UpdateButtons(self.state)
 
 	def InitRoom(self):
-		self.solver = FloodFillSolver(BigEmptyRoom(10,10))
+		self.solver = FloodFillSolver(BigEmptyRoom(20,20))
 		for bucket in buckets:
 			self.solver.AddBucket(bucket)
 		self.boardLayout.InitRoom(self.solver.room)
 		self.state = AppState.Ready
+		self.paintingColor = floorSquare
 		self.boardLayout.UpdateRoom()
 		self.footer.UpdateButtons(self.state)
 		self.generator = self.solver.Generate()
@@ -260,17 +259,22 @@ class FloodFill(App):
 	def ResetButtonCallback(self, instance):
 		self.InitRoom()
 
-	def TouchNotificationCallback(self, pos):
+	def TouchNotificationCallback(self, pos, first_touch = False):
 		# pos is in fractions
 		row = int(pos[1]*len(self.solver.room))
-		if (len(self.solver.room) >0):
+		if (len(self.solver.room) > 0):
 			col = int(pos[0]*len(self.solver.room[0]))
 		else:
 			col = -1
 		tile = [row, col]
-		bucket = {'color': wallSquare, 'pos': tile}
-		print('Adding bucket {bucket}'.format(bucket=bucket))
-		self.solver.AddBucket(bucket, add_to_queue = False)
+		if first_touch:
+			curColor = self.solver.GetColor(tile)
+			if curColor == wallSquare:
+				self.paintingColor = floorSquare
+			else:
+				self.paintingColor = wallSquare
+		bucket = {'color': self.paintingColor, 'pos': tile}
+		self.solver.AddBucket(bucket, painting_walls=True)
 		self.boardLayout.UpdateRoom()
 
 
