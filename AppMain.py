@@ -316,9 +316,10 @@ class FloodFill(App):
 			col = -1
 		tile = [row, col]
 		if self.state == AppState.DrawingBuckets:
-			bucket = {'color': bucketColors[self.curBucketColor], 'pos': tile}
-			self.curBucketColor = (self.curBucketColor+1)%len(bucketColors)
-			self.solver.AddBucket(bucket)
+			if first_touch:
+				bucket = {'color': bucketColors[self.curBucketColor], 'pos': tile}
+				self.curBucketColor = (self.curBucketColor+1)%len(bucketColors)
+				self.solver.AddBucket(bucket)
 		else:
 			if first_touch:
 				curColor = self.solver.GetColor(tile)

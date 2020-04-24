@@ -10,6 +10,8 @@ class FloodFillSolver:
 	def __init__(self, room):
 		self.room = room
 		self.tiles = deque()
+		self.yieldLevel = 1
+		self.prevAlpha = 1.0
 
 	def AddBucket(self, bucket, painting_walls=False):
 		row = bucket['pos'][0]
@@ -45,6 +47,10 @@ class FloodFillSolver:
 				if tile != [0, 0, 0, 1] and tile != [1, 1, 1, 1]:
 					row[col] = [1, 1, 1, 1]
 
+	def ConditionalYield(self, level):
+		if level > self.yieldLevel:
+			yield level
+
 	def Generate(self):
 		while self.tiles:
 			tile = self.tiles.popleft()
@@ -52,11 +58,14 @@ class FloodFillSolver:
 			col = tile[1]
 			color = self.room[row][col]
 			newAlpha = 0.3 + 0.96*(color[3]-0.3)
+			if newAlpha != self.prevAlpha:
+				self.prevAlpha=newAlpha
+				yield from self.ConditionalYield(2)
 			newColor = color.copy()
 			newColor[3] = newAlpha
 			for dpos in [[-1, 0],[0, -1],[1, 0],[0,1]]:
 				newTile = [row+dpos[0], col + dpos[1]]
 				if self.AddBucket({'color':newColor, 'pos':newTile}):
-					yield 1
-		yield 2
+					yield from self.ConditionalYield(1)
+		yield from self.ConditionalYield(3)
 
