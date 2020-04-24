@@ -29,6 +29,15 @@ buckets = [
 		'pos': [0,4]}
 	]
 
+bucketColors = [
+	[1, 0, 0, 1],
+	[0, 1, 0, 1],
+	[0, 0, 1, 1],
+	[1, 1, 0, 1],
+	[1, 0, 1, 1],
+	[0, 1, 1, 1]
+	]
+
 def BigEmptyRoom(numRows, numColumns):
 	room = []
 	for rowNum in range(numRows):
@@ -38,12 +47,50 @@ def BigEmptyRoom(numRows, numColumns):
 		room.append(row)
 	return room
 
-
 class AppState(Enum):
-	Ready = 1
-	Running = 2
-	Paused = 3
-	Finished = 4
+	DrawingWalls = 1
+	DrawingBuckets = 2
+	Running = 3
+	Paused = 4
+	Finished = 5
+
+nextState={
+	AppState.DrawingWalls: AppState.DrawingBuckets,
+	AppState.DrawingBuckets: AppState.Running,
+	AppState.Running: AppState.Paused,
+	AppState.Paused: AppState.Running
+	}
+
+class ButtonInfo:
+	def __init__(self, enabled=True, text=''):
+		self.enabled = enabled
+		self.text=text
+
+class AppInfo:
+	def __init__(self, statusText='', 
+							resetInfo=ButtonInfo(), 
+							startInfo=ButtonInfo()):
+		self.statusText=statusText
+		self.resetInfo=resetInfo
+		self.startInfo=startInfo
+
+infoFromState = {
+	AppState.DrawingWalls: AppInfo(statusText='Drawing Walls', 
+												 resetInfo=ButtonInfo(text='Reset All', enabled=False),
+												 startInfo=ButtonInfo(text='Draw Buckets', enabled=True)),
+	AppState.DrawingBuckets: AppInfo(statusText='Drawing Buckets', 
+												 resetInfo=ButtonInfo(text='Reset Buckets', enabled=True),
+												 startInfo=ButtonInfo(text='Start', enabled=True)),
+	AppState.Finished: AppInfo(statusText='Done', 
+												 resetInfo=ButtonInfo(text='Reset All', enabled=True),
+												 startInfo=ButtonInfo(text='Pause', enabled=False)),
+	AppState.Paused: AppInfo(statusText='Paused', 
+												 resetInfo=ButtonInfo(text='Reset All', enabled=True),
+												 startInfo=ButtonInfo(text='Start', enabled=True)),
+	AppState.Running: AppInfo(statusText='Running Simulation', 
+												 resetInfo=ButtonInfo(text='Reset All', enabled=False),
+												 startInfo=ButtonInfo(text='Pause', enabled=True))
+	}
 
 
 # BoardLayout encapsulates the playing board
@@ -134,15 +181,9 @@ class HeaderLayout(BoxLayout):
 		self.fpsLabel = Label(text='0 fps', color=[0.7, 0.05, 0.7, 1])
 		self.add_widget(self.fpsLabel)
 		
-	def UpdateText(self, fps=0, state=AppState.Ready):
-		statusFromState = {
-			AppState.Ready: 'Drawing Walls',
-			AppState.Finished: 'Done',
-			AppState.Paused: 'Paused',
-			AppState.Running: 'Running Simulation'}
-
+	def UpdateText(self, fps=0, appInfo=infoFromState[AppState.DrawingWalls]):
 		self.fpsLabel.text = '{fpsValue:.0f} fps'.format(fpsValue=fps)
-		self.statusLabel.text = statusFromState[state]
+		self.statusLabel.text = appInfo.statusText
 
 	def update_rect(self, instance, value):
 		instance.rect.pos = instance.pos
@@ -177,30 +218,19 @@ class FooterLayout(BoxLayout):
 		instance.rect.pos = instance.pos
 		instance.rect.size = instance.size
 
-	def UpdateButtons(self, state):
-		if state==AppState.Finished:
-			self.startButton.text = 'Start'
-			self.startButton.disabled = True
-			self.resetButton.text = 'Reset'
-			self.resetButton.disabled = False
-			return
-		if state == AppState.Paused or state == AppState.Ready:
-			self.startButton.text = 'Start'
-			self.startButton.disabled = False
-			self.resetButton.text = 'Reset'
-			self.resetButton.disabled = True
-			return
-		if state == AppState.Running:
-			self.startButton.text = 'Pause'
-			self.startButton.disabled = False
-			self.resetButton.text = 'Reset'
-			self.resetButton.disabled = True
-			return
+	def UpdateButtons(self, appInfo=infoFromState[AppState.DrawingWalls]):
+		startInfo = appInfo.startInfo
+		self.startButton.text = startInfo.text
+		self.startButton.disabled = not startInfo.enabled
+		resetInfo = appInfo.resetInfo
+		self.resetButton.text = resetInfo.text
+		self.resetButton.disabled = not resetInfo.enabled
 
 		
 class FloodFill(App):
 	def build(self):
-		self.state = AppState.Ready
+		self.state = AppState.DrawingWalls
+		self.curBucketColor = 0
 
 		self.root = layout = BoxLayout(orientation = 'vertical')
 
@@ -241,35 +271,32 @@ class FloodFill(App):
 			self.state = AppState.Finished
 			self.UpdateUX(fps=fpsValue, state=self.state)
 
-	def UpdateUX(self, fps=0, state=AppState.Ready):
-		self.footer.UpdateButtons(self.state)
-		self.header.UpdateText(fps=fps, state=state)
+	def UpdateUX(self, fps=0, state=AppState.DrawingWalls):
+		self.footer.UpdateButtons(appInfo=infoFromState[self.state])
+		self.header.UpdateText(fps=fps, appInfo=infoFromState[self.state])
 
 	def UpdateText(self, fps, state):
 		self.boardLayout.UpdateRoom()
 		self.UpdateUX(fps=fps, state=self.state)
 
 	def StartButtonCallback(self, instance):
-		if self.state == AppState.Ready or self.state == AppState.Paused:
-			self.state = AppState.Running
-		else:
-			if self.state == AppState.Running:
-				self.state = AppState.Paused
+		self.state = nextState[self.state]
 		self.UpdateUX(state=self.state)
 
 	def InitRoom(self):
 		self.solver = FloodFillSolver(BigEmptyRoom(30,30))
-		for bucket in buckets:
-			self.solver.AddBucket(bucket)
 		self.boardLayout.InitRoom(self.solver.room)
-		self.state = AppState.Ready
+		self.state = AppState.DrawingWalls
 		self.paintingColor = floorSquare
 		self.boardLayout.UpdateRoom()
 		self.UpdateUX(state=self.state)
 		self.generator = self.solver.Generate()
 
 	def ResetButtonCallback(self, instance):
-		self.InitRoom()
+		if (self.state == AppState.DrawingBuckets):
+			self.InitRoom()
+		else:
+			self.InitRoom()
 
 	def TouchNotificationCallback(self, pos, first_touch = False):
 		# pos is in fractions
@@ -279,14 +306,19 @@ class FloodFill(App):
 		else:
 			col = -1
 		tile = [row, col]
-		if first_touch:
-			curColor = self.solver.GetColor(tile)
-			if curColor == wallSquare:
-				self.paintingColor = floorSquare
-			else:
-				self.paintingColor = wallSquare
-		bucket = {'color': self.paintingColor, 'pos': tile}
-		self.solver.AddBucket(bucket, painting_walls=True)
+		if self.state == AppState.DrawingBuckets:
+			bucket = {'color': bucketColors[self.curBucketColor], 'pos': tile}
+			self.curBucketColor = (self.curBucketColor+1)%len(bucketColors)
+			self.solver.AddBucket(bucket)
+		else:
+			if first_touch:
+				curColor = self.solver.GetColor(tile)
+				if curColor == wallSquare:
+					self.paintingColor = floorSquare
+				else:
+					self.paintingColor = wallSquare
+			bucket = {'color': self.paintingColor, 'pos': tile}
+			self.solver.AddBucket(bucket, painting_walls=True)
 		self.boardLayout.UpdateRoom()
 
 

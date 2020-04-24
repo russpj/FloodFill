@@ -43,7 +43,7 @@ class FloodFillSolver:
 			row = tile[0]
 			col = tile[1]
 			color = self.room[row][col]
-			newAlpha = 0.3 + 0.93*(color[3]-0.3)
+			newAlpha = 0.3 + 0.96*(color[3]-0.3)
 			newColor = color.copy()
 			newColor[3] = newAlpha
 			for dpos in [[-1, 0],[0, -1],[1, 0],[0,1]]:
