@@ -76,19 +76,19 @@ class AppInfo:
 
 infoFromState = {
 	AppState.DrawingWalls: AppInfo(statusText='Drawing Walls', 
-												 resetInfo=ButtonInfo(text='Reset All', enabled=False),
+												 resetInfo=ButtonInfo(text='Reset Walls', enabled=True),
 												 startInfo=ButtonInfo(text='Draw Buckets', enabled=True)),
 	AppState.DrawingBuckets: AppInfo(statusText='Drawing Buckets', 
 												 resetInfo=ButtonInfo(text='Reset Buckets', enabled=True),
 												 startInfo=ButtonInfo(text='Start', enabled=True)),
 	AppState.Finished: AppInfo(statusText='Done', 
-												 resetInfo=ButtonInfo(text='Reset All', enabled=True),
+												 resetInfo=ButtonInfo(text='Reset Buckets', enabled=True),
 												 startInfo=ButtonInfo(text='Pause', enabled=False)),
 	AppState.Paused: AppInfo(statusText='Paused', 
-												 resetInfo=ButtonInfo(text='Reset All', enabled=True),
+												 resetInfo=ButtonInfo(text='Reset Buckets', enabled=True),
 												 startInfo=ButtonInfo(text='Start', enabled=True)),
 	AppState.Running: AppInfo(statusText='Running Simulation', 
-												 resetInfo=ButtonInfo(text='Reset All', enabled=False),
+												 resetInfo=ButtonInfo(text='Reset', enabled=False),
 												 startInfo=ButtonInfo(text='Pause', enabled=True))
 	}
 
@@ -292,9 +292,18 @@ class FloodFill(App):
 		self.UpdateUX(state=self.state)
 		self.generator = self.solver.Generate()
 
+	def ClearPaint(self):
+		self.solver.ClearPaint()
+		self.state = AppState.DrawingWalls
+		self.boardLayout.UpdateRoom()
+		self.UpdateUX(state=self.state)
+		self.generator = self.solver.Generate()
+
 	def ResetButtonCallback(self, instance):
-		if (self.state == AppState.DrawingBuckets):
-			self.InitRoom()
+		if (self.state == AppState.DrawingBuckets or 
+				self.state == AppState.Finished or 
+				self.state == AppState.Paused):
+			self.ClearPaint()
 		else:
 			self.InitRoom()
 

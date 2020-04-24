@@ -37,6 +37,14 @@ class FloodFillSolver:
 		curColor = self.room[row][col]
 		return curColor
 
+	def ClearPaint(self):
+		self.tiles.clear()
+		for row in self.room:
+			for col in range(len(row)):
+				tile = row[col]
+				if tile != [0, 0, 0, 1] and tile != [1, 1, 1, 1]:
+					row[col] = [1, 1, 1, 1]
+
 	def Generate(self):
 		while self.tiles:
 			tile = self.tiles.popleft()
