@@ -57,7 +57,7 @@ class FloodFillSolver:
 			row = tile[0]
 			col = tile[1]
 			color = self.room[row][col]
-			newAlpha = 0.3 + 0.96*(color[3]-0.3)
+			newAlpha = 0.2 + 0.98*(color[3]-0.2)
 			if newAlpha != self.prevAlpha:
 				self.prevAlpha=newAlpha
 				yield from self.ConditionalYield(2)

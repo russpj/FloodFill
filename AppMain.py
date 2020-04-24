@@ -250,7 +250,7 @@ class FloodFill(App):
 
 		self.InitRoom()
 
-		Clock.schedule_interval(self.FrameN, 0.01)
+		Clock.schedule_interval(self.FrameN, 1/10.0)
 
 		return layout
 
@@ -284,7 +284,7 @@ class FloodFill(App):
 		self.UpdateUX(state=self.state)
 
 	def InitRoom(self):
-		self.solver = FloodFillSolver(BigEmptyRoom(30,30))
+		self.solver = FloodFillSolver(BigEmptyRoom(40,40))
 		self.boardLayout.InitRoom(self.solver.room)
 		self.state = AppState.DrawingWalls
 		self.paintingColor = floorSquare
